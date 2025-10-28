@@ -151,6 +151,22 @@ body {
   margin: 20px 0;
 }
 
+.level-solved-badge {
+  display: inline-block;
+  background: #27ae60;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.level-floating {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
 .level-card h2 {
   color: #667eea;
   margin-bottom: 10px;
@@ -247,6 +263,24 @@ body {
   background: #229954;
 }
 
+.btn-reload {
+  background: #9b59b6;
+  color: white;
+}
+
+.btn-reload:hover {
+  background: #8e44ad;
+}
+
+.btn-next {
+  background: #e67e22;
+  color: white;
+}
+
+.btn-next:hover {
+  background: #d35400;
+}
+
 .mode-indicator {
   padding: 8px 16px;
   border-radius: 6px;
@@ -272,12 +306,11 @@ body {
   grid-template-rows: repeat(var(--rows), 40px);
   gap: 0;
   background: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .clue-cell {
   background: #f8f9fa;
-  border: 1px solid #d0d7de;
+  border: 1px solid #2b2b2b;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -295,9 +328,42 @@ body {
   margin: 0;
 }
 
+.corner-cell {
+  border: none !important;
+  background: #f8f9fa !important;
+  border-right: 2px solid #2b2b2b !important;
+  border-bottom: 2px solid #2b2b2b !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
+}
+
+.no-offset-left {
+  margin-left: 0 !important;
+}
+
+.no-offset-top {
+  margin-top: 0 !important;
+}
+
+.clue-cell.thick-left {
+  border-left-width: 3px;
+}
+
+.clue-cell.thick-top {
+  border-top-width: 3px;
+}
+
+.clue-cell.thick-right {
+  border-right-width: 2px;
+}
+
+.clue-cell.thick-bottom {
+  border-bottom-width: 2px;
+}
+
 .cell {
   background: white;
-  border: 1px solid #d0d7de;
+  border: 1px solid #2b2b2b;
   cursor: pointer;
   transition: all 0.15s ease;
   position: relative;
@@ -305,12 +371,20 @@ body {
   margin-top: -1px;
 }
 
+.cell.thick-left {
+  border-left-width: 3px;
+}
+
+.cell.thick-top {
+  border-top-width: 3px;
+}
+
 .cell:hover {
-  background: #f0f0f0;
+  background: #e6e6e6;
 }
 
 .cell.filled {
-  background: #212529;
+  background: #0f1111;
 }
 
 .cell.filled:hover {
