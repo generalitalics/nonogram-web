@@ -104,6 +104,25 @@ body {
   transform: translateY(-2px);
 }
 
+.btn-admin {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid white;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+  margin: 12px;
+}
+
+.btn-admin:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
 .levels-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));

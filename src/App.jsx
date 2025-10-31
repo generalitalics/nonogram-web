@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import DifficultySelect from './components/DifficultySelect';
 import LevelSelect from './components/LevelSelect';
 import Puzzle from './components/Puzzle';
+import Admin from './components/Admin';
 import { puzzles } from './puzzleData';
 import { markLevelCompleted } from './utils/localStorage';
 
 function App() {
   const [currentDifficulty, setCurrentDifficulty] = useState(null);
   const [currentPuzzle, setCurrentPuzzle] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const handleDifficultySelect = (difficulty) => {
     setCurrentDifficulty(difficulty);
@@ -30,6 +32,32 @@ function App() {
     setCurrentPuzzle(null);
   };
 
+  const handleOpenAdmin = () => {
+    setIsAdmin(true);
+    if (window?.history?.pushState) {
+      window.history.pushState({}, '', '/admin');
+    }
+  };
+
+  const handleCloseAdmin = () => {
+    setIsAdmin(false);
+    if (window?.history?.pushState) {
+      window.history.pushState({}, '', '/');
+    }
+  };
+
+  React.useEffect(() => {
+    // initial path check
+    if (window.location.pathname === '/admin') {
+      setIsAdmin(true);
+    }
+    const onPop = () => {
+      setIsAdmin(window.location.pathname === '/admin');
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
   const handleNextLevel = () => {
     if (!currentDifficulty || !currentPuzzle) return;
     const filtered = Object.values(puzzles)
@@ -47,7 +75,9 @@ function App() {
 
   return (
     <div className="app">
-      {currentPuzzle ? (
+      {isAdmin ? (
+        <Admin onClose={handleCloseAdmin} />
+      ) : currentPuzzle ? (
         <Puzzle
           puzzle={puzzles[currentPuzzle]}
           difficulty={currentDifficulty}
@@ -63,7 +93,7 @@ function App() {
           onBack={handleBackToDifficulty}
         />
       ) : (
-        <DifficultySelect onSelectDifficulty={handleDifficultySelect} />
+        <DifficultySelect onSelectDifficulty={handleDifficultySelect} onOpenAdmin={handleOpenAdmin} />
       )}
     </div>
   );
