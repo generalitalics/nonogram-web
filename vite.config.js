@@ -13,6 +13,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/nonogram/, '/nonogram'),
       },
+      '/api/auth': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/auth/, '/auth'),
+      },
     },
   },
 })

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Login from './components/Login';
 import DifficultySelect from './components/DifficultySelect';
 import LevelSelect from './components/LevelSelect';
 import Puzzle from './components/Puzzle';
@@ -7,9 +8,20 @@ import { puzzles } from './puzzleData';
 import { markLevelCompleted } from './utils/localStorage';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const [currentDifficulty, setCurrentDifficulty] = useState(null);
   const [currentPuzzle, setCurrentPuzzle] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    // Check if user is already logged in (from localStorage or session)
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      setCurrentUser(savedUser);
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   const handleDifficultySelect = (difficulty) => {
     setCurrentDifficulty(difficulty);
@@ -73,10 +85,36 @@ function App() {
     }
   };
 
+  const handleLogin = (username) => {
+    setCurrentUser(username);
+    setIsAuthenticated(true);
+    localStorage.setItem('currentUser', username);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('currentUser');
+    setCurrentUser(null);
+    setIsAuthenticated(false);
+    setCurrentDifficulty(null);
+    setCurrentPuzzle(null);
+    setIsAdmin(false);
+    if (window?.history?.pushState) {
+      window.history.pushState({}, '', '/');
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="app">
+        <Login onLogin={handleLogin} />
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       {isAdmin ? (
-        <Admin onClose={handleCloseAdmin} />
+        <Admin onClose={handleCloseAdmin} onLogout={handleLogout} />
       ) : currentPuzzle ? (
         <Puzzle
           puzzle={puzzles[currentPuzzle]}
@@ -91,9 +129,14 @@ function App() {
           difficulty={currentDifficulty}
           onSelectLevel={handleLevelSelect}
           onBack={handleBackToDifficulty}
+          onLogout={handleLogout}
         />
       ) : (
-        <DifficultySelect onSelectDifficulty={handleDifficultySelect} onOpenAdmin={handleOpenAdmin} />
+        <DifficultySelect 
+          onSelectDifficulty={handleDifficultySelect} 
+          onOpenAdmin={handleOpenAdmin}
+          onLogout={handleLogout}
+        />
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-function Admin({ onClose }) {
+function Admin({ onClose, onLogout }) {
   const [size, setSize] = useState('10x10');
   const [label, setLabel] = useState('');
   const [emoji, setEmoji] = useState('');
@@ -125,13 +125,20 @@ function Admin({ onClose }) {
 
   return (
     <div className="level-select" style={{ position: 'relative', width: '100%', minHeight: '100vh' }}>
-      <button 
-        className="btn-back" 
-        onClick={onClose} 
-        style={{ position: 'absolute', left: 0, top: 0 }}
-      >
-        ← Back
-      </button>
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '0 12px' }}>
+        <button 
+          className="btn-back" 
+          onClick={onClose}
+        >
+          ← Back
+        </button>
+        <button 
+          className="btn-logout" 
+          onClick={onLogout}
+        >
+          Logout
+        </button>
+      </div>
       
       <h1>Admin Panel</h1>
       

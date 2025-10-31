@@ -1,15 +1,22 @@
 import React from 'react';
 
-function DifficultySelect({ onSelectDifficulty, onOpenAdmin }) {
+function DifficultySelect({ onSelectDifficulty, onOpenAdmin, onLogout }) {
   return (
     <div className="level-select" style={{ position: 'relative' }}>
-      <button
-        className="btn-admin"
-        onClick={onOpenAdmin}
-        style={{ position: 'absolute', right: 0, top: 0 }}
-      >
-        Admin
-      </button>
+      <div style={{ position: 'absolute', right: 0, top: 0, display: 'flex', gap: '8px' }}>
+        <button
+          className="btn-admin"
+          onClick={onOpenAdmin}
+        >
+          Admin
+        </button>
+        <button
+          className="btn-logout"
+          onClick={onLogout}
+        >
+          Logout
+        </button>
+      </div>
       <h1>🎨 Nonograms</h1>
       <p style={{ color: 'white', fontSize: '1.2rem', marginBottom: '40px' }}>
         Choose difficulty

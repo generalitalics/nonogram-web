@@ -1,16 +1,21 @@
 import React from 'react';
 import { isLevelCompleted } from '../utils/localStorage';
 
-function LevelSelect({ puzzles, difficulty, onSelectLevel, onBack }) {
+function LevelSelect({ puzzles, difficulty, onSelectLevel, onBack, onLogout }) {
   const filteredPuzzles = Object.values(puzzles).filter(
     puzzle => puzzle.difficulty === difficulty
   );
 
   return (
-    <div className="level-select">
-      <button className="btn-back" onClick={onBack}>
-        ← Back to Difficulty
-      </button>
+    <div className="level-select" style={{ position: 'relative' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+        <button className="btn-back" onClick={onBack}>
+          ← Back to Difficulty
+        </button>
+        <button className="btn-logout" onClick={onLogout}>
+          Logout
+        </button>
+      </div>
       <h1>{difficulty} Levels</h1>
       <div className="levels-grid">
         {filteredPuzzles.map((puzzle, index) => {
