@@ -198,9 +198,16 @@ function Admin({ onClose }) {
 
         {/* Interactive Grid Preview */}
         <div style={{ marginTop: 24 }}>
-          <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#34495e', marginBottom: 8 }}>
-            Interactive Editor:
-          </label>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#34495e' }}>
+              Interactive Editor:
+            </label>
+            {grid && (
+              <button className="btn btn-secondary" onClick={clearAll}>
+                Clear
+              </button>
+            )}
+          </div>
           <div
             style={{
               border: '2px solid #bdc3c7',

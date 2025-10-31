@@ -1,7 +1,7 @@
 {
   "name": "nonogram-web",
   "version": "1.0.0",
-  "description": "Nonograms JCross web application",
+  "description": "Nonograms web application",
   "private": true,
   "scripts": {
     "dev": "vite",

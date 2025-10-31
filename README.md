@@ -1,4 +1,4 @@
-# Nonograms JCross - Web Edition
+# Nonograms - Web Edition
 
 Веб-приложение для решения японских кроссвордов (Nonograms), созданное с использованием React.js и Vite.
 
