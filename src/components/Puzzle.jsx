@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { puzzles } from '../puzzleData';
 import { isLevelCompleted, unmarkLevelCompleted } from '../utils/localStorage';
+import { saveProgress, loadProgress, checkProgress } from '../utils/api';
 
-function Puzzle({ puzzle, difficulty, onBack, onSolved, onNextLevel }) {
+function Puzzle({ puzzle, difficulty, onBack, onSolved, onNextLevel, username }) {
   const [grid, setGrid] = useState(
     Array(puzzle.rows).fill(null).map(() => Array(puzzle.cols).fill(0))
   );
@@ -13,6 +14,7 @@ function Puzzle({ puzzle, difficulty, onBack, onSolved, onNextLevel }) {
   const [isReloaded, setIsReloaded] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [justSolved, setJustSolved] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Loading state - show loader immediately
 
   // Calculate level number based on difficulty
   const levelNumber = useMemo(() => {
@@ -171,16 +173,71 @@ function Puzzle({ puzzle, difficulty, onBack, onSolved, onNextLevel }) {
       setTimeout(() => setShowCelebration(false), 3000);
       setJustSolved(true);
       
+      // Save progress with 'completed' reason (use cleanedGrid)
+      const matrix = cleanedGrid.map(row => 
+        row.map(cell => cell === 1 ? 1 : 0)
+      );
+      if (username) {
+        // Use levelNumber (sequential number within difficulty) instead of puzzle.id
+        saveProgress(username, levelNumber, difficulty, matrix, 'completed').catch(err => 
+          console.error('Failed to save progress:', err)
+        );
+      }
+      
       // Mark level as completed
       if (onSolved) {
         onSolved(puzzle.id);
       }
     }
-  }, [grid, isSolved, puzzle.id, onSolved]);
+  }, [grid, isSolved, puzzle.id, onSolved, username, difficulty, levelNumber]);
+
+  // Convert grid to matrix (0s and 1s only, -1 becomes 0)
+  const gridToMatrix = (currentGrid) => {
+    return currentGrid.map(row => 
+      row.map(cell => cell === 1 ? 1 : 0)
+    );
+  };
+
+  // Save progress with reason
+  const saveProgressWithReason = useCallback(async (reason, currentGrid = grid) => {
+    if (!username) {
+      console.warn('⚠️ Cannot save progress: username is missing');
+      return;
+    }
+    
+    try {
+      const matrix = gridToMatrix(currentGrid);
+      console.log(`💾 Saving progress: reason="${reason}", level=${levelNumber}, difficulty="${difficulty}"`);
+      // Use levelNumber (sequential number within difficulty) instead of puzzle.id
+      await saveProgress(username, levelNumber, difficulty, matrix, reason);
+    } catch (error) {
+      console.error('❌ Failed to save progress:', error);
+      // Don't show error to user, just log it
+    }
+  }, [username, levelNumber, difficulty, grid]);
 
   const clearAll = () => {
     setGrid(Array(puzzle.rows).fill(null).map(() => Array(puzzle.cols).fill(0)));
     setIsSolved(false);
+  };
+
+  const handleSave = async () => {
+    console.log('💾 Manual save triggered');
+    await saveProgressWithReason('manual');
+    // Show brief feedback (optional)
+    alert('Progress saved!');
+  };
+
+  const handleBack = async () => {
+    await saveProgressWithReason('back');
+    onBack();
+  };
+
+  const handleNextLevel = async () => {
+    await saveProgressWithReason('next_level');
+    if (onNextLevel) {
+      onNextLevel();
+    }
   };
 
   const handleConfirmReload = () => {
@@ -192,22 +249,81 @@ function Puzzle({ puzzle, difficulty, onBack, onSolved, onNextLevel }) {
     setShowConfirmDialog(false);
   };
 
-  // If level already solved, preload solution
+  // Load progress from backend when level opens
   useEffect(() => {
-    if (isLevelCompleted && isLevelCompleted(puzzle.id) && !isReloaded) {
-      setGrid(puzzle.solution.map(row => row.map(v => (v === 1 ? 1 : 0))));
-      setIsSolved(true);
-      setShowCelebration(false);
-      setJustSolved(false);
-    } else {
-      // ensure fresh grid when switching to unsolved
-      setGrid(Array(puzzle.rows).fill(null).map(() => Array(puzzle.cols).fill(0)));
-      setIsSolved(false);
-      setShowCelebration(false);
-      setJustSolved(false);
-    }
+    const loadLevelProgress = async () => {
+      setIsLoading(true); // Show loader immediately
+      const startTime = Date.now(); // Track start time for minimum display duration
+      const MIN_LOADER_TIME = 500; // Minimum loader display time in milliseconds
+
+      try {
+        // If level already solved locally, show solution
+        if (isLevelCompleted && isLevelCompleted(puzzle.id) && !isReloaded) {
+          setGrid(puzzle.solution.map(row => row.map(v => (v === 1 ? 1 : 0))));
+          setIsSolved(true);
+          setShowCelebration(false);
+          setJustSolved(false);
+        } else if (username && !isReloaded) {
+          // If user is logged in, try to load progress from backend
+          try {
+            // Step 1: Quick check (without matrix)
+            const checkResult = await checkProgress(username, levelNumber, difficulty);
+            
+            // Step 2: Load full progress (with matrix) if progress exists
+            if (checkResult.has_progress) {
+              const progressData = await loadProgress(username, levelNumber, difficulty);
+              
+              if (progressData.has_progress && progressData.matrix) {
+                // Validate matrix dimensions match puzzle
+                if (
+                  progressData.matrix.length === puzzle.rows &&
+                  progressData.matrix[0]?.length === puzzle.cols
+                ) {
+                  console.log('✅ Loading saved progress into grid');
+                  setGrid(progressData.matrix);
+                } else {
+                  console.warn('⚠️ Saved matrix dimensions do not match puzzle, using empty grid');
+                  setGrid(Array(puzzle.rows).fill(null).map(() => Array(puzzle.cols).fill(0)));
+                }
+              } else {
+                // No matrix in response, start with empty grid
+                console.log('ℹ️ No matrix in progress data, starting with empty grid');
+                setGrid(Array(puzzle.rows).fill(null).map(() => Array(puzzle.cols).fill(0)));
+              }
+            } else {
+              // No progress found, start with empty grid
+              console.log('ℹ️ No saved progress found, starting with empty grid');
+              setGrid(Array(puzzle.rows).fill(null).map(() => Array(puzzle.cols).fill(0)));
+            }
+          } catch (error) {
+            console.error('❌ Error loading progress, using empty grid:', error);
+            // On error, start with empty grid
+            setGrid(Array(puzzle.rows).fill(null).map(() => Array(puzzle.cols).fill(0)));
+          }
+        } else {
+          // No username or reloaded - start with empty grid
+          setGrid(Array(puzzle.rows).fill(null).map(() => Array(puzzle.cols).fill(0)));
+        }
+
+        setIsSolved(false);
+        setShowCelebration(false);
+        setJustSolved(false);
+      } finally {
+        // Ensure loader is shown for minimum duration to prevent flickering
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, MIN_LOADER_TIME - elapsedTime);
+        
+        if (remainingTime > 0) {
+          await new Promise(resolve => setTimeout(resolve, remainingTime));
+        }
+        
+        setIsLoading(false); // Hide loader after minimum display time
+      }
+    };
+
+    loadLevelProgress();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [puzzle.id]);
+  }, [puzzle.id, username, levelNumber, difficulty, isReloaded]);
 
   // Find max number of clues in rows and columns
   const maxRowClues = Math.max(...puzzle.rowClues.map(c => c.length));
@@ -263,6 +379,20 @@ function Puzzle({ puzzle, difficulty, onBack, onSolved, onNextLevel }) {
     return cells;
   };
 
+  // Show loader while loading progress
+  if (isLoading) {
+    return (
+      <div className="puzzle-container">
+        <div className="loader-overlay">
+          <div className="loader-content">
+            <div className="loader-spinner"></div>
+            <p>Loading level...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="puzzle-container">
       {showCelebration && (
@@ -305,11 +435,11 @@ function Puzzle({ puzzle, difficulty, onBack, onSolved, onNextLevel }) {
               >
                 Reload
               </button>
-              <button className="btn btn-primary" onClick={onBack}>
+              <button className="btn btn-primary" onClick={handleBack}>
                 ← Back to Levels
               </button>
               {onNextLevel && (
-                <button className="btn btn-next" onClick={onNextLevel}>
+                <button className="btn btn-next" onClick={handleNextLevel}>
                   Next Level →
                 </button>
               )}
@@ -328,19 +458,22 @@ function Puzzle({ puzzle, difficulty, onBack, onSolved, onNextLevel }) {
               <button className="btn btn-secondary" onClick={clearAll}>
                 Clear All
               </button>
+              <button className="btn btn-primary" onClick={handleSave} style={{ background: '#17a2b8' }}>
+                💾 Save
+              </button>
               {isSolved ? (
                 <>
-                  <button className="btn btn-primary" onClick={onBack}>
+                  <button className="btn btn-primary" onClick={handleBack}>
                     ← Back to Levels
                   </button>
                   {onNextLevel && (
-                    <button className="btn btn-next" onClick={onNextLevel}>
+                    <button className="btn btn-next" onClick={handleNextLevel}>
                       Next Level →
                     </button>
                   )}
                 </>
               ) : (
-                <button className="btn btn-primary" onClick={onBack}>
+                <button className="btn btn-primary" onClick={handleBack}>
                   ← Back to Levels
                 </button>
               )}

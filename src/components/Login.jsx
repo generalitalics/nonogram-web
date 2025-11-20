@@ -18,20 +18,27 @@ function Login({ onLogin }) {
     setIsLoading(true);
 
     try {
+      console.log('🔐 Attempting login for user:', username);
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
 
+      console.log('📥 Login response status:', response.status, response.statusText);
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Login failed:', errorData);
         setError(errorData.message || 'Invalid username or password');
         setIsLoading(false);
         return;
       }
 
       const data = await response.json();
+      console.log('✅ Login successful:', data);
+      // Backend may return user info, token, etc. - handle as needed
+      // For now, just use username from form
       onLogin(username);
     } catch (err) {
       setError('Login failed. Please try again.');

@@ -76,13 +76,21 @@ function Admin({ onClose, onLogout }) {
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.detail || errorMessage;
+        } catch {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
       
       const data = await response.json();
       
       // Parse response according to the example format: {emoji, label, matrix}
+      // Backend returns: {emoji, label, matrix}
       if (data.label) setLabel(data.label);
       if (data.emoji) setEmoji(data.emoji);
       if (data.matrix !== undefined && data.matrix !== null) {
